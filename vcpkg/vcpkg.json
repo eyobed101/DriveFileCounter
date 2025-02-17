@@ -1,0 +1,9 @@
+{
+    "name": "drive-file-counter",
+    "version": "1.0.0",
+    "description": "A C library to estimate the number of files on an NTFS drive.",
+    "homepage": "https://github.com/eyobed101/DriveFileCounter",
+    "license": "MIT",
+    "dependencies": []
+  }
+  
