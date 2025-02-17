@@ -11,7 +11,6 @@ function estimateFiles(drive, callback) {
     const command = 'powershell';
     const args = ['-Command', `& ${executablePath} ${drive}`];
     
-    console.log(`Executing command: ${command} ${args.join(' ')}`);
 
     const child = spawn(command, args);
     let output = '';
@@ -37,7 +36,10 @@ function estimateFiles(drive, callback) {
         }
 
         try {
-            const result = JSON.parse(output);
+            const jsonStart = output.lastIndexOf('{');
+            const jsonString = output.substring(jsonStart);
+
+            const result = JSON.parse(jsonString);
             callback(result);
         } catch (parseError) {
             callback({
