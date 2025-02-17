@@ -59,7 +59,7 @@ The **Estimate Files Counter** Node.js package allows you to estimate the number
 1. Install the NPM package:
 
    ```sh
-   npm install estimate-files-counter
+   npm install drive-file-counter
    ```
 
 ### Usage
