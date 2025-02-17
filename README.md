@@ -7,7 +7,7 @@
 <br />
 <div align="center">
   
-<h3 align="center">Estimate Files Counter</h3>
+<h3 align="center">NTFS Drive Files Counter: Estimate File Counts on NTFS Partitions</h3>
   <p align="center">
     A Node.js package for counting estimated files in a drive using a standalone executable.
     <br />
@@ -40,7 +40,7 @@
 
 ## About The Project
 
-The **Estimate Files Counter** Node.js package allows you to estimate the number of files within a specific drive or directory using a standalone executable. This tool is useful for quickly gathering file statistics and integrating into Node.js applications.
+The **Estimate Files Counter** Node.js package allows you to estimate the number of files within a specific drive using a standalone executable. This package leverages an executable to calculate the estimated number of files on any given drive by querying system metadata. The tool is designed for easy integration into any Node.js project, offering a simple API to run file count estimates on local drives (e.g., C:, D:, etc.).
 
 ### Key Features:
 - **Cross-Platform Compatibility**: Works on Windows systems where NTFS file system metadata is available.
