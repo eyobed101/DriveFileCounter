@@ -14,42 +14,69 @@ def build(drive):
     pipe = Popen(command, stdout=PIPE, stderr=PIPE)
     stdout, stderr = pipe.communicate()
     
+    # Decode outputs
+    stdout = stdout.decode('utf-8', errors='ignore').strip()
+    stderr = stderr.decode('utf-8', errors='ignore').strip()
+    
+    # Log outputs for debugging
+    print(f"stdout: {stdout}")
+    print(f"stderr: {stderr}")
+
+    # Check if the command failed
     if pipe.returncode != 0:
-        error_message = stderr.decode('utf-8').strip()
         return {
             "success": False,
-            "error": f"Failed to execute fsutil command: {error_message}",
+            "error": f"Failed to execute fsutil command: {stderr or 'Unknown error'}",
             "drive": drive,
-            "estimated_files": 0
+            "estimated_files": 0,
+            "stdout": stdout,
+            "stderr": stderr
         }
 
-    for line in stdout.decode('utf-8').splitlines():
+    # Parse stdout
+    estimated_files = 0
+    mft_found = False
+    for line in stdout.splitlines():
         if "Mft Valid Data Length" in line:
+            mft_found = True
             parts = line.split()
             if len(parts) >= 7:
-                x = float(parts[5])
-                unit = parts[6]
-                if 'MB' in unit:
-                    estimated_files = int(x * 1000000 / 1024)
-                elif 'GB' in unit:
-                    estimated_files = int(x * 1000000000 / 1024)
-                elif 'TB' in unit:
-                    estimated_files = int(x * 1000000000000 / 1024)
-                else:
-                    estimated_files = 0
-                
-                return {
-                    "success": True,
-                    "drive": drive,
-                    "estimated_files": estimated_files,
-                    "error": None
-                }
+                try:
+                    x = float(parts[5].replace(',', ''))
+                    unit = parts[6]
+                    if 'MB' in unit:
+                        estimated_files = int(x * 1000000 / 1024)
+                    elif 'GB' in unit:
+                        estimated_files = int(x * 1000000000 / 1024)
+                    elif 'TB' in unit:
+                        estimated_files = int(x * 1000000000000 / 1024)
+                    else:
+                        estimated_files = 0
+                except ValueError as ve:
+                    return {
+                        "success": False,
+                        "error": f"Parsing error: {str(ve)}",
+                        "drive": drive,
+                        "estimated_files": 0,
+                        "stdout": stdout,
+                        "stderr": stderr
+                    }
     
+    if not mft_found:
+        return {
+            "success": False,
+            "error": "'Mft Valid Data Length' not found in output.",
+            "drive": drive,
+            "estimated_files": 0,
+            "stdout": stdout,
+            "stderr": stderr
+        }
+
     return {
-        "success": False,
-        "error": "Could not find 'Mft Valid Data Length' in fsutil output.",
+        "success": True,
         "drive": drive,
-        "estimated_files": 0
+        "estimated_files": estimated_files,
+        "error": None
     }
 
 if __name__ == "__main__":
@@ -82,4 +109,4 @@ if __name__ == "__main__":
         sys.exit(1)
     
     result = build(drive)
-    print(json.dumps(result))
+    print(json.dumps(result, indent=4))

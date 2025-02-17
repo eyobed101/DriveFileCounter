@@ -1,16 +1,22 @@
 {
-  "name": "drivefilecounter",
+  "name": "drive-file-counter",
   "version": "1.0.0",
+  "description": "A lightweight Node.js package for estimating the number of files on a specified drive.",
+
   "type": "module",
   "main": "index.js",
+  "bin": {
+    "estimate-files": "./index.js"
+  },
+  "keywords": ["estimate","count" ,"files", "drive", "nodejs"],
+  "author": "Eyobed Elias",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "child_process": "^1.0.2"
   }
 }
+
+

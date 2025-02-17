@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,26 +6,38 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function estimateFiles(drive, callback) {
-    const executablePath = path.join(__dirname, 'estimate_files.exe');
+    const executablePath = path.resolve(__dirname, 'bin', 'estimate_files.exe');
+
+    const command = 'powershell';
+    const args = ['-Command', `& ${executablePath} ${drive}`];
     
-    // Corrected PowerShell command (without extra quotes around the path and drive argument)
-    const command = `powershell -Command "& ${executablePath} ${drive}"`;  // No quotes for arguments
+    console.log(`Executing command: ${command} ${args.join(' ')}`);
 
-    console.log(`Executing command: ${command}`); // Debugging: Log the command
+    const child = spawn(command, args);
+    let output = '';
+    let errorOutput = '';
 
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
+    child.stdout.on('data', (data) => {
+        output += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+        errorOutput += data.toString();
+    });
+
+    child.on('close', (code) => {
+        if (code !== 0) {
             return callback({
                 success: false,
-                error: `Failed to execute executable: ${error.message}`,
+                error: `Executable exited with code ${code}.`,
                 drive: drive,
                 estimated_files: 0,
-                stderr: stderr.toString() // Include stderr for debugging
+                stderr: errorOutput
             });
         }
 
         try {
-            const result = JSON.parse(stdout);
+            const result = JSON.parse(output);
             callback(result);
         } catch (parseError) {
             callback({
@@ -33,8 +45,8 @@ function estimateFiles(drive, callback) {
                 error: `Failed to parse executable output: ${parseError.message}`,
                 drive: drive,
                 estimated_files: 0,
-                stdout: stdout.toString(), // Include stdout for debugging
-                stderr: stderr.toString() // Include stderr for debugging
+                stdout: output,
+                stderr: errorOutput
             });
         }
     });

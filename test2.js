@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -6,43 +6,29 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 function estimateFiles() {
-    const drive = ' '; // Hardcoded drive as 'C:'
+    const drive = 'C:';  // Hardcoded drive as 'C:'
     const executablePath = path.join(__dirname, 'estimate_files.exe');
     
-    // Run via cmd instead of powershell
-    const command = `cmd /c "${executablePath} ${drive}"`; // Run through cmd
+    // Use spawn to pass arguments more cleanly
+    const child = spawn(executablePath, [drive], {
+        shell: true,
+        windowsHide: false
+    });
 
-    console.log(`Executing command: ${command}`); // Debugging: Log the command
+    // Capture standard output
+    child.stdout.on('data', (data) => {
+        console.log(`Output: ${data}`);
+    });
 
-    exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error({
-                success: false,
-                error: `Failed to execute executable: ${error.message}`,
-                drive: drive,
-                estimated_files: 0,
-                stderr: stderr.toString() // Include stderr for debugging
-            });
-            return;
-        }
+    // Capture standard error
+    child.stderr.on('data', (data) => {
+        console.error(`Error: ${data}`);
+    });
 
-        console.log(`stdout: ${stdout}`);
-        console.log(`stderr: ${stderr}`);
-
-        try {
-            const result = JSON.parse(stdout);
-            console.log(result);
-        } catch (parseError) {
-            console.error({
-                success: false,
-                error: `Failed to parse executable output: ${parseError.message}`,
-                drive: drive,
-                estimated_files: 0,
-                stdout: stdout.toString(), // Include stdout for debugging
-                stderr: stderr.toString() // Include stderr for debugging
-            });
-        }
+    // Capture exit code
+    child.on('close', (code) => {
+        console.log(`Process exited with code: ${code}`);
     });
 }
 
-estimateFiles(); // Directly calling the function to execute
+estimateFiles();
