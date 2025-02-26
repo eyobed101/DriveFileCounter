@@ -67,7 +67,7 @@ The **Estimate Files Counter** Node.js package allows you to estimate the number
 Once the package is installed, you can use it in your project by importing and calling the `estimateFiles` function. Here's an example of how to use it:
 
 ```js
-import { estimateFiles } from 'estimate-files-counter';
+import { estimateFiles } from 'drive-file-counter';
 
 estimateFiles('C:', (result) => {
     if (result.success) {

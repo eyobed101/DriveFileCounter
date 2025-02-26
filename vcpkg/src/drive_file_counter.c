@@ -1,39 +1,44 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <windows.h>
 #include "../include/drive_file_counter.h"
 
-void estimate_files(const char *drive, FileCountResult *result) {
-    char command[256];
-    char buffer[512];
-    FILE *fp;
-    long estimated_files = 0;
+int is_admin() {
+    PSID pSID = NULL;
+    BOOL isAdmin = FALSE;
 
-    snprintf(command, sizeof(command), "fsutil fsinfo ntfsinfo %s", drive);
-    
-    fp = _popen(command, "r");
-    if (fp == NULL) {
-        result->success = 0;
-        strcpy(result->error, "Failed to run command.");
-        return;
-    }
-
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        if (strstr(buffer, "Total Clusters")) {
-            char *token = strtok(buffer, ":");
-            token = strtok(NULL, ":");
-            estimated_files = atol(token);
+    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+    if (AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &pSID)) {
+        if (!CheckTokenMembership(NULL, pSID, &isAdmin)) {
+            isAdmin = FALSE;
         }
+        FreeSid(pSID);
+    }
+    return isAdmin;
+}
+
+int main() {
+    if (!is_admin()) {
+        printf("{\n\"success\": false,\n\"error\": \"Please run the program as Administrator and try again.\",\n\"drive\": null,\n\"estimated_files\": 0\n}\n");
+        return 1;
     }
 
-    _pclose(fp);
+    const char* drive = "C:";
 
-    if (estimated_files > 0) {
-        result->success = 1;
-        result->estimated_files = estimated_files;
-        strcpy(result->drive, drive);
+    if (drive[strlen(drive) - 1] != ':') {
+        printf("{\n\"success\": false,\n\"error\": \"Drive letter must end with ':' (e.g., C:)\",\n\"drive\": \"%s\",\n\"estimated_files\": 0\n}\n", drive);
+        return 1;
+    }
+
+    long estimated_files;
+    int result = estimate_files(drive, &estimated_files);
+
+    if (result == 0) {
+        printf("{\n\"success\": true,\n\"error\": null,\n\"drive\": \"%s\",\n\"estimated_files\": %ld\n}\n", drive, estimated_files);
     } else {
-        result->success = 0;
-        strcpy(result->error, "Failed to estimate file count.");
+        printf("{\n\"success\": false,\n\"error\": \"Failed to estimate files.\",\n\"drive\": \"%s\",\n\"estimated_files\": 0\n}\n", drive);
     }
+
+    return 0;
 }
